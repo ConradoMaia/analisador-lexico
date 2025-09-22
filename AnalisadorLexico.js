@@ -1,14 +1,44 @@
 import { TiposDeTokens } from './tiposDeTokens.js';
 import { Token } from './Token.js';
+import { palavrasChave } from './palavrasChave.js';
 
 const regras = [
   [TiposDeTokens.ESPACO_BRANCO, /^\s+/],
-  [TiposDeTokens.IF, /^if\b/],
-  [TiposDeTokens.THEN, /^then\b/],
-  [TiposDeTokens.NUMERO_INTEIRO, /^(0|[1-9][0-9]*)/],
+  [TiposDeTokens.COMENTARIO, /^\{(.|\s)*?\}/], // Comentário de bloco { ... }
+  [TiposDeTokens.COMENTARIO, /^\/\/.*/],       // Comentário de linha //
+  
+  [TiposDeTokens.NUMERO_REAL, /^\d+\.\d+/],
+  [TiposDeTokens.NUMERO_INTEIRO, /^\d+/],
+  
+  [TiposDeTokens.LITERAL_STRING, /^"([^"\\]|\\.)*"/],
+  
   [TiposDeTokens.IDENTIFICADOR, /^[a-zA-Z_][a-zA-Z0-9_]*/],
+
+  [TiposDeTokens.ATRIBUICAO, /^:=/],
+  [TiposDeTokens.DIFERENTE, /^<>/],
+  [TiposDeTokens.MENOR_IGUAL, /^<=/],
+  [TiposDeTokens.MAIOR_IGUAL, /^>=/],
+  
+  [TiposDeTokens.PARENTESES_ESQ, /^\(/],
+  [TiposDeTokens.PARENTESES_DIR, /^\)/],
+  [TiposDeTokens.PONTO_VIRGULA, /^;/],
+  [TiposDeTokens.DOIS_PONTOS, /^:/],
+  [TiposDeTokens.PONTO, /^\./],
+  [TiposDeTokens.VIRGULA, /^,/],
+  
   [TiposDeTokens.MAIS, /^\+/],
+  [TiposDeTokens.MENOS, /^-/],
+  [TiposDeTokens.MULTIPLICACAO, /^\*/],
+  [TiposDeTokens.DIVISAO_REAL, /^\//],
+  [TiposDeTokens.IGUAL, /^=/],
+  [TiposDeTokens.MENOR, /^</],
+  [TiposDeTokens.MAIOR, /^>/],
 ];
+
+const tokensIgnorados = new Set([
+  TiposDeTokens.ESPACO_BRANCO,
+  TiposDeTokens.COMENTARIO
+]);
 
 export class AnalisadorLexico {
   constructor(codigoFonte) {
@@ -33,16 +63,24 @@ export class AnalisadorLexico {
   obterProximoToken() {
     const subStringRestante = this.codigo.substring(this.posicao);
 
-    for (const [tipo, regex] of regras) {
+    for (let [tipo, regex] of regras) {
       const corresponde = subStringRestante.match(regex);
 
       if (corresponde) {
         const lexema = corresponde[0];
+        
+        if (tipo === TiposDeTokens.IDENTIFICADOR) {
+          const tipoDaPalavraChave = palavrasChave[lexema.toLowerCase()];
+          if (tipoDaPalavraChave) {
+            tipo = tipoDaPalavraChave;
+          }
+        }
+        
         const token = new Token(tipo, lexema, this.linha, this.coluna);
         
         this.avancarPosicao(lexema);
 
-        if (tipo === TiposDeTokens.ESPACO_BRANCO) {
+        if (tokensIgnorados.has(tipo)) {
           return null;
         }
 
@@ -54,8 +92,6 @@ export class AnalisadorLexico {
   }
   
   avancarPosicao(lexema) {
-    this.posicao += lexema.length;
-    
     const linhas = lexema.split('\n');
     if (linhas.length > 1) {
       this.linha += linhas.length - 1;
@@ -63,5 +99,6 @@ export class AnalisadorLexico {
     } else {
       this.coluna += lexema.length;
     }
+    this.posicao += lexema.length;
   }
 }
