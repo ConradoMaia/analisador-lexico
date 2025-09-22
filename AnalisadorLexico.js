@@ -12,7 +12,7 @@ const regras = [
   
   [TiposDeTokens.LITERAL_STRING, /^"([^"\\]|\\.)*"/],
   
-  [TiposDeTokens.IDENTIFICADOR, /^[a-zA-Z_][a-zA-Z0-9_]*/],
+  [TiposDeTokens.IDENTIFICADOR, /^[\p{L}_][\p{L}\p{N}_]*/u],
 
   [TiposDeTokens.ATRIBUICAO, /^:=/],
   [TiposDeTokens.DIFERENTE, /^<>/],
